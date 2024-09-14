@@ -1,3 +1,5 @@
+from itertools import islice
+import loguru
 import openai
 import os
 import threading
@@ -26,6 +28,30 @@ MODEL_NAME_LIST = {
     }
     
 }
+
+
+def ddg_search_text(query:str, max_results=5):
+    from duckduckgo_search import DDGS
+    search_results = []
+    reference_results = []
+    with DDGS() as ddgs:
+        ddgs_gen = ddgs.text(query, backend="lite")
+        for r in islice(ddgs_gen, max_results):
+            search_results.append(r)
+    for idx, result in enumerate(search_results):
+        loguru.logger.debug(f"搜索结果{idx + 1}：{result}")
+        ##[result["body"], result["href"]]
+        reference_results.append({
+                "name": result["title"],
+                "url": result["href"],
+                "snippet": result["body"]
+        })
+    return reference_results
+
+PROMPT_TEST = '''
+你是一个智能助手，你能够根据用户输入的时事新闻内容和上下文信息，能够解读其中主要时政问题,解读需要简要清楚，重点指出问题,字数不超过100字,如下用户提供搜索上下文信息
+{context}
+'''
 
 
 class LLMApi():
@@ -68,9 +94,15 @@ class LLMApi():
         return json_string
     
     @classmethod
-    def build_prompt(cls,query):
+    def build_prompt(cls,query,search=False):
+        context = ""
+        if search:
+            search_result = ddg_search_text(query)
+            if search_result:
+                context = ";".join([text["snippet"] for text in search_result])
+                loguru.logger.info(f"search context:{context}")
         #这里可以加上ddsg api接口
-        prompt = [{"role":"system","content":"你是一个智能助手，你能够根据用户输入的时事新闻内容，能够解读其中主要时政问题,解读需要简要清楚，重点指出问题,字数不超过100字"},
+        prompt = [{"role":"system","content":PROMPT_TEST.format(context=context)},
                   {"role": "user", "content": query}]
         return prompt
     

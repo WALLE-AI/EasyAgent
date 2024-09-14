@@ -14,7 +14,7 @@ voice = client.voices.get(id=voice_id)
 
 def llm_transcript():
     test_text = "2024年9月，梵蒂冈城邦（Vatican City）元首，罗马天主教教皇方济各（Pope Francis）出访东南亚四国。9月13日，在从新加坡返回罗马的飞机上，教皇向随行记者们再次表达访问中国的意愿，并称对教廷与北京就续签有关主教任命临时协议的对话进展感到满意。"
-    prompt = LLMApi.build_prompt(test_text)
+    prompt = LLMApi.build_prompt(test_text,True)
     result = LLMApi.call_llm(prompt,llm_type="siliconflow",model_name="Qwen/Qwen2-7B-Instruct")
     loguru.logger.info(f"response result:{result.choices[0].message.content}")
     return result.choices[0].message.content
