@@ -1,5 +1,6 @@
 import threading
 import httpx
+import loguru
 from openai import OpenAI
 import openai
 from llm import LLMApi
@@ -7,6 +8,8 @@ import streamlit as st
 import os
 ##加载env file
 from dotenv import load_dotenv
+
+from simaple_cartesia import execute_tts
 load_dotenv()
 
 st.title(":sunglasses: audioAgent")
@@ -24,13 +27,14 @@ for message in st.session_state.messages:
         st.markdown(message["content"])
 
 if prompt := st.chat_input("What is up?"):
-    st.session_state.messages.append({"role": "system", "content": "你是starchat智能助手，由中建三局智能研发中心打造"})
-    st.session_state.messages.append({"role": "user", "content": prompt})
+    prompt_seach = LLMApi.build_prompt(prompt,search=True)
+    st.session_state.messages.append(prompt_seach[0])
+    st.session_state.messages.append(prompt_seach[1])
     with st.chat_message("user"):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
-        stream = LLMApi.llm_client("siliconflow").chat.completions.create(
+        stream = LLMApi.llm_client(llm_type="siliconflow").chat.completions.create(
             model=st.session_state["openai_model"],
             messages=[
                 {"role": m["role"], "content": m["content"]}
@@ -39,4 +43,6 @@ if prompt := st.chat_input("What is up?"):
             stream=True,
         )
         response = st.write_stream(stream)
+        loguru.logger.info(f"response:{response}")
+        execute_tts(response)
     st.session_state.messages.append({"role": "assistant", "content": response})

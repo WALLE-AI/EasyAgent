@@ -19,39 +19,42 @@ def llm_transcript():
     loguru.logger.info(f"response result:{result.choices[0].message.content}")
     return result.choices[0].message.content
 
-transcript = llm_transcript()
+# transcript = llm_transcript()
 
-# You can check out our models at https://docs.cartesia.ai/getting-started/available-models
-model_id = "sonic-multilingual"
 
-# You can find the supported `output_format`s at https://docs.cartesia.ai/api-reference/endpoints/stream-speech-server-sent-events
-output_format = {
-    "container": "raw",
-    "encoding": "pcm_f32le",
-    "sample_rate": 44100,
-}
 
-p = pyaudio.PyAudio()
-rate = 44100
+def execute_tts(content):
+    # You can check out our models at https://docs.cartesia.ai/getting-started/available-models
+    model_id = "sonic-multilingual"
 
-stream = None
+    # You can find the supported `output_format`s at https://docs.cartesia.ai/api-reference/endpoints/stream-speech-server-sent-events
+    output_format = {
+        "container": "raw",
+        "encoding": "pcm_f32le",
+        "sample_rate": 44100,
+    }
 
-# Generate and stream audio
-for output in client.tts.sse(
-    model_id=model_id,
-    transcript=transcript,
-    voice_embedding=voice["embedding"],
-    stream=True,
-    output_format=output_format,
-):
-    buffer = output["audio"]
+    p = pyaudio.PyAudio()
+    rate = 44100
 
-    if not stream:
-        stream = p.open(format=pyaudio.paFloat32, channels=1, rate=rate, output=True)
+    stream = None
 
-    # Write the audio data to the stream
-    stream.write(buffer)
+    # Generate and stream audio
+    for output in client.tts.sse(
+        model_id=model_id,
+        transcript=content,
+        voice_embedding=voice["embedding"],
+        stream=True,
+        output_format=output_format,
+    ):
+        buffer = output["audio"]
 
-stream.stop_stream()
-stream.close()
-p.terminate()
+        if not stream:
+            stream = p.open(format=pyaudio.paFloat32, channels=1, rate=rate, output=True)
+
+        # Write the audio data to the stream
+        stream.write(buffer)
+
+    stream.stop_stream()
+    stream.close()
+    p.terminate()

@@ -8,8 +8,8 @@ from pipecat.pipeline.task import PipelineTask
 from pipecat.pipeline.runner import PipelineRunner
 from pipecat.services.cartesia import CartesiaTTSService
 from pipecat.transports.services.daily import DailyParams, DailyTransport
-from load_env import load_env
-load_env
+from dotenv import load_dotenv
+load_dotenv()
 
 async def main():
   async with aiohttp.ClientSession() as session:

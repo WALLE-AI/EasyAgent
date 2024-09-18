@@ -49,7 +49,7 @@ def ddg_search_text(query:str, max_results=5):
     return reference_results
 
 PROMPT_TEST = '''
-你是一个智能助手，你能够根据用户输入的时事新闻内容和上下文信息，能够解读其中主要时政问题,解读需要简要清楚，重点指出问题,字数不超过100字,如下用户提供搜索上下文信息
+你是一个智能助手，你能够根据用户输入的时事新闻内容和上下文信息，能够解读其中主要时政问题,解读需要简要清楚，重点指出问题,字数不超过200字,如下用户提供搜索上下文信息
 {context}
 '''
 
@@ -71,9 +71,9 @@ class LLMApi():
             base_url = "https://api.openai.com/v1"
             api_key  = os.environ.get("OPENAI_API_KEY")
         return base_url,api_key     
-            
-    def llm_client(self,llm_type):
-        base_url,api_key = self.init_client_config(llm_type)
+    @classmethod
+    def llm_client(cls,llm_type):
+        base_url,api_key = cls().init_client_config(llm_type)
         thread_local = threading.local()
         try:
             return thread_local.client
