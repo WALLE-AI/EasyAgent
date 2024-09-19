@@ -49,7 +49,7 @@ def ddg_search_text(query:str, max_results=5):
     return reference_results
 
 PROMPT_TEST = '''
-你是一个智能助手，你能够根据用户输入的时事新闻内容和上下文信息，能够解读其中主要时政问题,解读需要简要清楚，重点指出问题,字数不超过200字,如下用户提供搜索上下文信息
+你是一个智能助手，你能够根据用户输入的时事新闻内容和上下文信息，能够解读其中主要时政问题,解读需要简要清楚，重点指出问题,字数不超过200字,如下为用户提供搜索上下文信息,如果用户输入于该主题不相关，请自己进行回复
 {context}
 '''
 
@@ -67,9 +67,12 @@ class LLMApi():
         elif llm_type =='siliconflow':
             base_url = "https://api.siliconflow.cn/v1"
             api_key = os.environ.get("SILICONFLOW_API_KEY")
-        else:
+        elif llm_type=="openai":
             base_url = "https://api.openai.com/v1"
             api_key  = os.environ.get("OPENAI_API_KEY")
+        else:
+            base_url = os.getenv("VLM_SERVE_HOST") +":9005/v1"
+            api_key  = "empty"
         return base_url,api_key     
     @classmethod
     def llm_client(cls,llm_type):
@@ -92,6 +95,21 @@ class LLMApi():
         from json_repair import repair_json
         json_string = repair_json(llm_response.choices[0].message.content,return_objects=True)
         return json_string
+    @classmethod
+    def build_image_prompt(cls,query,image_base64):
+        user_content = [
+                {"type": "text",
+                 "text": query},
+                {
+                    "type": "image_url",
+                    "image_url": {
+                        "url": image_base64,
+                    },
+                }
+        ]
+        prompt = [{"role":"system","content":"你是一个建筑施工行业资深的质量检查员，你能够高精度判别出施工工地中施工质量风险，请根据用户的场景图片进行高质量的回复,需要重点分析出隐患类别、质量分析、整改要求和法规依据"},
+                  {"role": "user", "content": user_content}]
+        return prompt
     
     @classmethod
     def build_prompt(cls,query,search=False):
